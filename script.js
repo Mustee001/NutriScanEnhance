@@ -437,15 +437,25 @@ function getUrgencyLevel(daysRemaining) {
 // =========================
 class NotificationManager {
   constructor() {
-    this.permission = Notification.permission;
+    this.permission = this.isNotificationSupported() ? Notification.permission : 'denied';
     this.checkInterval = null;
   }
   
+  isNotificationSupported() {
+    return 'Notification' in window && typeof Notification !== 'undefined';
+  }
+  
   async requestPermission() {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      this.permission = permission;
-      return permission === 'granted';
+    if (this.isNotificationSupported()) {
+      try {
+        const permission = await Notification.requestPermission();
+        this.permission = permission;
+        return permission === 'granted';
+      } catch (error) {
+        console.log('Notification permission request failed:', error);
+        this.permission = 'denied';
+        return false;
+      }
     }
     return false;
   }
@@ -468,7 +478,7 @@ class NotificationManager {
   }
   
   checkExpiringItems() {
-    if (this.permission !== 'granted') return;
+    if (!this.isNotificationSupported() || this.permission !== 'granted') return;
     
     const items = StorageManager.getAllItems();
     const urgentItems = items.filter(item => 
@@ -488,24 +498,37 @@ class NotificationManager {
   }
   
   showNotification(title, body, onclick = null) {
-    if (this.permission === 'granted') {
-      const notification = new Notification(title, {
-        body: body,
-        icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍎</text></svg>",
-        badge: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚠️</text></svg>",
-        tag: 'nutriscan-expiry'
-      });
-      
-      if (onclick) {
-        notification.onclick = onclick;
+    if (this.isNotificationSupported() && this.permission === 'granted') {
+      try {
+        const notification = new Notification(title, {
+          body: body,
+          icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍎</text></svg>",
+          badge: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚠️</text></svg>",
+          tag: 'nutriscan-expiry'
+        });
+        
+        if (onclick) {
+          notification.onclick = onclick;
+        }
+        
+        // Auto-close after 10 seconds
+        setTimeout(() => notification.close(), 10000);
+      } catch (error) {
+        console.log('Failed to show notification:', error);
+        // Fallback to browser alert if notifications fail
+        if (onclick) {
+          const userChoice = confirm(`${title}\n\n${body}\n\nWould you like to view your dashboard?`);
+          if (userChoice) {
+            onclick();
+          }
+        }
       }
-      
-      // Auto-close after 10 seconds
-      setTimeout(() => notification.close(), 10000);
     }
   }
   
   scheduleReminder(itemId, reminderDate) {
+    if (!this.isNotificationSupported()) return;
+    
     const now = Date.now();
     const reminderTime = new Date(reminderDate).getTime();
     const delay = reminderTime - now;
