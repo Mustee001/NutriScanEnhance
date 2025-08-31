@@ -1209,3 +1209,49 @@ a:focus {
     border: 2px solid currentColor;
   }
 }
+
+/* =========================
+   IMAGE UPLOAD STYLES
+========================= */
+.image-upload-container {
+  margin: 1rem 0;
+}
+
+.upload-drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--light-bg);
+}
+
+.upload-drop-zone:hover, .upload-drop-zone.dragover {
+  border-color: var(--primary-color);
+  background: rgba(76, 175, 80, 0.05);
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.upload-hint {
+  font-size: 0.85rem;
+  color: var(--light-text);
+  margin: 0;
+}
+
+.image-preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.image-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  margin-bottom: 1rem;
+}

@@ -964,6 +964,90 @@ function initializeInputPage() {
     });
   }
   
+  // Image upload functionality
+  const imageUpload = document.getElementById('imageUpload');
+  const uploadDropZone = document.getElementById('uploadDropZone');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('previewImg');
+  const removeImageBtn = document.getElementById('removeImage');
+
+  if (uploadDropZone) {
+    // Click to upload
+    uploadDropZone.addEventListener('click', () => imageUpload.click());
+    
+    // Drag and drop
+    uploadDropZone.addEventListener('dragover', handleDragOver);
+    uploadDropZone.addEventListener('drop', handleDrop);
+    uploadDropZone.addEventListener('dragenter', handleDragEnter);
+    uploadDropZone.addEventListener('dragleave', handleDragLeave);
+  }
+
+  if (imageUpload) {
+    imageUpload.addEventListener('change', handleImageSelect);
+  }
+
+  if (removeImageBtn) {
+    removeImageBtn.addEventListener('click', removeImage);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    uploadDropZone.classList.add('dragover');
+  }
+
+  function handleDragEnter(e) {
+    e.preventDefault();
+    uploadDropZone.classList.add('dragover');
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    uploadDropZone.classList.remove('dragover');
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    uploadDropZone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleImageFile(files[0]);
+    }
+  }
+
+  function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      handleImageFile(file);
+    }
+  }
+
+  function handleImageFile(file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (JPG, PNG, or WebP)');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      alert('Image too large. Please select an image under 5MB.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      previewImg.src = e.target.result;
+      imagePreview.style.display = 'block';
+      uploadDropZone.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeImage() {
+    imagePreview.style.display = 'none';
+    uploadDropZone.style.display = 'block';
+    imageUpload.value = '';
+    previewImg.src = '';
+  }
+  
   function showAutocomplete(input) {
     const matches = Object.keys(foodExpiryDatabase)
       .filter(food => {
@@ -1621,7 +1705,7 @@ function handleError(error, message = 'An error occurred') {
 class APIService {
   constructor() {
     this.baseURL = 'https://api.nutriscan.ai/v1';
-    this.apiKey = process.env.NUTRISCAN_API_KEY || 'demo-key';
+    this.apiKey = 'demo-key'; // In production, this would come from environment config
   }
   
   /**

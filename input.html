@@ -64,8 +64,19 @@
           </div>
           
           <div class="upload-section">
-            <p class="upload-option">Or upload an image (feature coming soon!)</p>
-            <div class="placeholder-img-upload">📷</div>
+            <p class="upload-option">Or upload an image of your food</p>
+            <div class="image-upload-container">
+              <input type="file" id="imageUpload" accept="image/*" capture="camera" style="display: none;">
+              <div class="upload-drop-zone" id="uploadDropZone">
+                <div class="upload-icon">📷</div>
+                <p>Click to upload or drag image here</p>
+                <p class="upload-hint">JPG, PNG, or WebP files</p>
+              </div>
+              <div id="imagePreview" class="image-preview" style="display: none;">
+                <img id="previewImg" src="" alt="Food preview">
+                <button type="button" id="removeImage" class="btn btn-small btn-danger">Remove Image</button>
+              </div>
+            </div>
           </div>
 
           <button type="submit" id="submitBtn" data-testid="button-analyze-food">
