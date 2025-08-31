@@ -1,0 +1,130 @@
+{
+  "name": "NutriScan AI - Smart Food Waste Reducer",
+  "short_name": "NutriScan AI",
+  "description": "Reduce food waste with AI-powered expiry alerts, realistic inventory management, and smart notifications. Track your environmental impact and save money.",
+  "version": "2.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#4CAF50",
+  "background_color": "#f9f9f9",
+  "lang": "en",
+  "scope": "/",
+  "categories": ["food", "utilities", "productivity", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 800' fill='%23f9f9f9'><rect width='400' height='800' fill='%234CAF50'/><text x='200' y='400' font-size='60' text-anchor='middle' fill='white'>📱 NutriScan</text><text x='200' y='460' font-size='20' text-anchor='middle' fill='white'>Smart Food Tracking</text></svg>",
+      "sizes": "400x800",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "NutriScan AI mobile interface"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600' fill='%23f9f9f9'><rect width='800' height='600' fill='%234CAF50'/><text x='400' y='300' font-size='80' text-anchor='middle' fill='white'>🍎 NutriScan AI</text><text x='400' y='360' font-size='24' text-anchor='middle' fill='white'>Desktop Food Waste Management</text></svg>",
+      "sizes": "800x600",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "NutriScan AI desktop interface"
+    }
+  ],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%234CAF50' rx='48'/><text x='96' y='130' font-size='120' text-anchor='middle'>🍎</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%234CAF50' rx='24'/><text x='96' y='130' font-size='120' text-anchor='middle'>🍎</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%234CAF50' rx='64'/><text x='256' y='340' font-size='320' text-anchor='middle'>🍎</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'><rect width='72' height='72' fill='%234CAF50' rx='12'/><text x='36' y='48' font-size='48' text-anchor='middle'>🍎</text></svg>",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%234CAF50' rx='16'/><text x='48' y='64' font-size='64' text-anchor='middle'>🍎</text></svg>",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 144 144'><rect width='144' height='144' fill='%234CAF50' rx='20'/><text x='72' y='96' font-size='96' text-anchor='middle'>🍎</text></svg>",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan Food",
+      "short_name": "Scan",
+      "description": "Quickly scan and add new food items to your inventory",
+      "url": "/input.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%23ff9800' rx='16'/><text x='48' y='64' font-size='64' text-anchor='middle'>📱</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your food inventory and expiry alerts",
+      "url": "/dashboard.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%232196f3' rx='16'/><text x='48' y='64' font-size='64' text-anchor='middle'>📊</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Recipes",
+      "short_name": "Recipes",
+      "description": "Get recipe suggestions for your expiring food",
+      "url": "/dashboard.html#recipes",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' fill='%239c27b0' rx='16'/><text x='48' y='64' font-size='64' text-anchor='middle'>🍽️</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+nutriscan",
+      "url": "/?action=%s"
+    }
+  ],
+  "permissions": [
+    "notifications"
+  ],
+  "features": [
+    "cross-origin-isolated"
+  ]
+}

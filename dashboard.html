@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriScan AI - Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍎</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+</head>
+<body>
+  <header>
+    <div class="logo">🍎 NutriScan AI</div>
+    <nav>
+      <ul>
+        <li><a href="index.html" data-testid="nav-home">Home</a></li>
+        <li><a href="input.html" data-testid="nav-scan">Scan Food</a></li>
+        <li><a href="dashboard.html" class="active" data-testid="nav-dashboard">Dashboard</a></li>
+        <li><a href="about.html" data-testid="nav-about">About</a></li>
+        <li><a href="pricing.html" data-testid="nav-pricing">Pricing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="dashboard-header">
+      <h1>Your Food Dashboard</h1>
+      <p>Smart inventory management with real expiry tracking. Items are sorted by urgency - act on expiring items to prevent waste!</p>
+    </section>
+
+    <!-- Recently Scanned Item Highlight -->
+    <section id="recent-item-section" class="recent-item-highlight" style="display: none;">
+      <h2>🆕 Just Scanned</h2>
+      <div id="recentItemCard" class="recent-item-card"></div>
+    </section>
+
+    <!-- Expiry Alerts Section -->
+    <section id="expiry-alerts-section" class="expiry-alerts" style="display: none;">
+      <h2>⚠️ Expiry Alerts</h2>
+      <div id="expiryAlerts" class="alert-grid"></div>
+    </section>
+
+    <section class="dashboard-summary">
+      <h2>Your Total Impact</h2>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <h4>💰 Money Saved</h4>
+          <p id="totalSavings" data-testid="total-savings">$0.00</p>
+        </div>
+        <div class="summary-card">
+          <h4>💨 CO2 Reduced</h4>
+          <p id="totalCo2" data-testid="total-co2">0.0 kg</p>
+        </div>
+        <div class="summary-card">
+          <h4>💧 Water Conserved</h4>
+          <p id="totalWater" data-testid="total-water">0 L</p>
+        </div>
+        <div class="summary-card">
+          <h4>📦 Items Tracked</h4>
+          <p id="totalItems" data-testid="total-items">0</p>
+        </div>
+      </div>
+      <div class="dashboard-actions">
+        <button id="exportCsvBtn" class="btn btn-secondary" data-testid="button-export-csv">📊 Export CSV</button>
+        <button id="exportPdfBtn" class="btn btn-secondary" data-testid="button-export-pdf">📄 Export PDF Report</button>
+        <button id="shareImpactBtn" class="btn btn-secondary" data-testid="button-share-impact">Share Your Impact</button>
+        <button id="notificationBtn" class="btn btn-secondary" data-testid="button-toggle-notifications">🔔 Enable Notifications</button>
+        <button id="clearStorageBtn" class="btn btn-danger" data-testid="button-clear-data">Clear All Data</button>
+        <button id="upgradeBtn" class="btn btn-premium" data-testid="button-upgrade-premium">⭐ Upgrade to Premium</button>
+      </div>
+    </section>
+
+    <section id="item-list-container">
+      <div class="section-header">
+        <h2>Your Food Inventory</h2>
+        <div class="filter-controls">
+          <select id="sortFilter" data-testid="sort-filter">
+            <option value="urgency">Sort by Urgency</option>
+            <option value="date">Sort by Purchase Date</option>
+            <option value="name">Sort by Name</option>
+            <option value="category">Sort by Category</option>
+          </select>
+          <select id="categoryFilter" data-testid="category-filter">
+            <option value="all">All Categories</option>
+            <option value="protein">Protein</option>
+            <option value="dairy">Dairy</option>
+            <option value="fruit">Fruits</option>
+            <option value="vegetable">Vegetables</option>
+            <option value="grain">Grains</option>
+            <option value="pantry">Pantry</option>
+          </select>
+        </div>
+      </div>
+      <div id="itemList" class="item-grid">
+        <p id="no-items-message" data-testid="no-items-message">You haven't scanned any items yet. <a href="input.html">Start scanning</a> to see your results!</p>
+      </div>
+    </section>
+    
+    <!-- Recipe Modal -->
+    <div id="recipeModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" data-testid="button-close-modal">&times;</span>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Usage Modal -->
+    <div id="usageModal" class="modal">
+      <div class="modal-content">
+        <span class="close-usage-modal" data-testid="button-close-usage-modal">&times;</span>
+        <h3>Update Item Usage</h3>
+        <form id="usageForm">
+          <div class="form-group">
+            <label for="usedQuantity">How much did you use?</label>
+            <input type="text" id="usedQuantity" placeholder="e.g., 1 lb, 2 cups, 3 pieces" required>
+            <small class="form-hint">Enter the amount you consumed or used</small>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">Update Usage</button>
+            <button type="button" class="btn btn-secondary" id="cancelUsage">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 NutriScan AI. All Rights Reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

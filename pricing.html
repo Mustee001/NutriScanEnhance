@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriScan AI - Pricing</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍎</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+</head>
+<body>
+  <header>
+    <div class="logo">🍎 NutriScan AI</div>
+    <nav>
+      <ul>
+        <li><a href="index.html" data-testid="nav-home">Home</a></li>
+        <li><a href="input.html" data-testid="nav-scan">Scan Food</a></li>
+        <li><a href="dashboard.html" data-testid="nav-dashboard">Dashboard</a></li>
+        <li><a href="about.html" data-testid="nav-about">About</a></li>
+        <li><a href="pricing.html" class="active" data-testid="nav-pricing">Pricing</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="pricing-header">
+      <h1>Choose Your Plan</h1>
+      <p>Start reducing food waste today with our freemium model featuring realistic inventory management</p>
+    </section>
+
+    <section class="pricing-grid">
+      <div class="pricing-card free-plan">
+        <div class="plan-header">
+          <h3>Free Plan</h3>
+          <div class="price">$0<span>/month</span></div>
+        </div>
+        <ul class="features-list">
+          <li>✅ 10 scans per day</li>
+          <li>✅ Purchase date-based expiry tracking</li>
+          <li>✅ Basic storage condition logic</li>
+          <li>✅ Simple quantity tracking</li>
+          <li>✅ Browser notifications</li>
+          <li>✅ Basic recipe suggestions</li>
+          <li>✅ CSV export</li>
+          <li>✅ Impact tracking</li>
+          <li>❌ Advanced analytics</li>
+          <li>❌ PDF reports</li>
+          <li>❌ Detailed recipes with nutrition</li>
+          <li>❌ API access</li>
+        </ul>
+        <button class="btn btn-secondary current-plan" data-testid="button-current-plan">Current Plan</button>
+      </div>
+
+      <div class="pricing-card basic-plan popular">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-header">
+          <h3>Basic Plan</h3>
+          <div class="price">$4.99<span>/month</span></div>
+        </div>
+        <ul class="features-list">
+          <li>✅ Unlimited scans</li>
+          <li>✅ Advanced fuzzy food recognition</li>
+          <li>✅ Intelligent storage condition algorithms</li>
+          <li>✅ Detailed quantity and portion tracking</li>
+          <li>✅ Smart notification scheduling</li>
+          <li>✅ Detailed recipes with nutrition facts</li>
+          <li>✅ PDF impact reports</li>
+          <li>✅ Enhanced data export options</li>
+          <li>✅ Weekly summary reports</li>
+          <li>✅ Priority support</li>
+          <li>❌ Business analytics</li>
+          <li>❌ API access</li>
+        </ul>
+        <button class="btn btn-primary" data-testid="button-upgrade-basic">Upgrade to Basic</button>
+      </div>
+
+      <div class="pricing-card pro-plan">
+        <div class="plan-header">
+          <h3>Pro Plan</h3>
+          <div class="price">$9.99<span>/month</span></div>
+        </div>
+        <ul class="features-list">
+          <li>✅ Everything in Basic</li>
+          <li>✅ Advanced business analytics</li>
+          <li>✅ Custom export formats</li>
+          <li>✅ Team collaboration features</li>
+          <li>✅ API access for integrations</li>
+          <li>✅ Custom notification workflows</li>
+          <li>✅ Advanced inventory forecasting</li>
+          <li>✅ White-label options</li>
+          <li>✅ Bulk import capabilities</li>
+          <li>✅ Priority API rate limits</li>
+          <li>✅ Dedicated support</li>
+        </ul>
+        <button class="btn btn-primary" data-testid="button-upgrade-pro">Upgrade to Pro</button>
+      </div>
+    </section>
+
+    <section class="features-comparison">
+      <h2>Feature Comparison</h2>
+      <div class="comparison-table">
+        <div class="comparison-row header">
+          <div class="feature-name">Feature</div>
+          <div class="plan-column">Free</div>
+          <div class="plan-column">Basic</div>
+          <div class="plan-column">Pro</div>
+        </div>
+        <div class="comparison-row">
+          <div class="feature-name">Daily Scans</div>
+          <div class="plan-column">10</div>
+          <div class="plan-column">Unlimited</div>
+          <div class="plan-column">Unlimited</div>
+        </div>
+        <div class="comparison-row">
+          <div class="feature-name">Fuzzy Food Recognition</div>
+          <div class="plan-column">Basic</div>
+          <div class="plan-column">Advanced</div>
+          <div class="plan-column">AI-Powered</div>
+        </div>
+        <div class="comparison-row">
+          <div class="feature-name">Storage Condition Logic</div>
+          <div class="plan-column">4 Types</div>
+          <div class="plan-column">8 Types</div>
+          <div class="plan-column">Custom</div>
+        </div>
+        <div class="comparison-row">
+          <div class="feature-name">Notification Scheduling</div>
+          <div class="plan-column">Basic</div>
+          <div class="plan-column">Smart</div>
+          <div class="plan-column">Custom Workflows</div>
+        </div>
+        <div class="comparison-row">
+          <div class="feature-name">Export Formats</div>
+          <div class="plan-column">CSV</div>
+          <div class="plan-column">CSV, PDF</div>
+          <div class="plan-column">All Formats</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="revenue-potential">
+      <h2>Market Opportunity</h2>
+      <div class="revenue-stats">
+        <div class="revenue-card">
+          <h3>Target Market</h3>
+          <p>2.8 billion households globally struggle with food waste</p>
+        </div>
+        <div class="revenue-card">
+          <h3>Market Size</h3>
+          <p>$46 billion food waste management market by 2025</p>
+        </div>
+        <div class="revenue-card">
+          <h3>Potential Revenue</h3>
+          <p>$1M+ ARR with 20K active users at $4.99/month</p>
+        </div>
+        <div class="revenue-card">
+          <h3>User Savings</h3>
+          <p>Average household saves $1,500+ annually with proper tracking</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <h2>Ready to Start Saving?</h2>
+      <p>Join thousands of users reducing food waste with realistic inventory management and smart notifications</p>
+      <a href="input.html" class="btn btn-primary" data-testid="button-start-free-trial">Start Free Trial</a>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 NutriScan AI. All Rights Reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
