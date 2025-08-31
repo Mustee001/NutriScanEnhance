@@ -439,6 +439,8 @@ class NotificationManager {
   constructor() {
     this.permission = this.isNotificationSupported() ? Notification.permission : 'denied';
     this.checkInterval = null;
+    this.history = this.loadNotificationHistory();
+    this.notificationTiming = this.loadNotificationTiming();
   }
   
   isNotificationSupported() {
@@ -478,23 +480,8 @@ class NotificationManager {
   }
   
   checkExpiringItems() {
-    if (!this.isNotificationSupported() || this.permission !== 'granted') return;
-    
-    const items = StorageManager.getAllItems();
-    const urgentItems = items.filter(item => 
-      item.calculatedData && item.calculatedData.urgency === 'urgent'
-    );
-    
-    if (urgentItems.length > 0) {
-      const itemNames = urgentItems.map(item => item.foodName).join(', ');
-      this.showNotification(
-        'Food Expiring Soon! ⚠️',
-        `These items expire in 2 days or less: ${itemNames}. Check your dashboard to take action.`,
-        () => {
-          window.location.href = 'dashboard.html';
-        }
-      );
-    }
+    // Use enhanced method
+    this.checkExpiringItemsEnhanced();
   }
   
   showNotification(title, body, onclick = null) {
@@ -547,6 +534,97 @@ class NotificationManager {
         }
       }, delay);
     }
+  }
+  
+  // Enhanced notification system methods
+  loadNotificationHistory() {
+    const history = localStorage.getItem('nutriscan_notification_history');
+    return history ? JSON.parse(history) : [];
+  }
+  
+  saveNotificationHistory() {
+    localStorage.setItem('nutriscan_notification_history', JSON.stringify(this.history));
+  }
+  
+  loadNotificationTiming() {
+    const timing = localStorage.getItem('nutriscan_notification_timing');
+    return timing ? parseInt(timing) : 2; // Default to 2 days
+  }
+  
+  saveNotificationTiming(days) {
+    this.notificationTiming = days;
+    localStorage.setItem('nutriscan_notification_timing', days.toString());
+  }
+  
+  addToHistory(title, body, type = 'auto') {
+    const historyItem = {
+      id: Date.now(),
+      title,
+      body,
+      type,
+      timestamp: new Date().toISOString()
+    };
+    
+    this.history.unshift(historyItem);
+    
+    // Keep only last 50 notifications
+    if (this.history.length > 50) {
+      this.history = this.history.slice(0, 50);
+    }
+    
+    this.saveNotificationHistory();
+  }
+  
+  checkExpiringItemsEnhanced() {
+    if (!this.isNotificationSupported() || this.permission !== 'granted') return;
+    
+    const items = StorageManager.getAllItems();
+    const urgentItems = items.filter(item => {
+      if (!item.calculatedData) return false;
+      return item.calculatedData.daysRemaining <= this.notificationTiming && 
+             item.calculatedData.daysRemaining > 0;
+    });
+    
+    if (urgentItems.length > 0) {
+      const itemNames = urgentItems.map(item => item.displayName || item.foodName).join(', ');
+      const title = `Food Expiring Soon! ⚠️`;
+      const body = `These items expire in ${this.notificationTiming} days or less: ${itemNames}. Check your dashboard to take action.`;
+      
+      this.showNotification(title, body, () => {
+        window.location.href = 'dashboard.html';
+      });
+      
+      this.addToHistory(title, body, 'auto');
+    }
+  }
+  
+  sendTestNotification() {
+    if (!this.isNotificationSupported()) {
+      alert('Notifications are not supported in your browser.');
+      return false;
+    }
+    
+    if (this.permission !== 'granted') {
+      alert('Please enable notifications first.');
+      return false;
+    }
+    
+    const title = 'NutriScan Test 🧪';
+    const body = 'This is a test notification. Your notification system is working properly!';
+    
+    this.showNotification(title, body);
+    this.addToHistory(title, body, 'test');
+    
+    return true;
+  }
+  
+  getNotificationHistory() {
+    return this.history;
+  }
+  
+  clearNotificationHistory() {
+    this.history = [];
+    this.saveNotificationHistory();
   }
 }
 
@@ -1308,6 +1386,7 @@ function displayFoodItems() {
   } else {
     noItemsMessage.style.display = 'none';
     itemList.innerHTML = items.map(item => createItemCard(item)).join('');
+    setupBulkActionsListeners();
   }
 }
 
@@ -1349,6 +1428,9 @@ function createItemCard(item) {
   
   return `
     <div class="item-card" data-item-id="${item.id}">
+      <div class="item-checkbox">
+        <input type="checkbox" class="item-select" data-item-id="${item.id}">
+      </div>
       <div class="item-header">
         <div class="item-name">${item.displayName || item.foodName}</div>
         <div class="item-quantity">${item.quantity}</div>
@@ -1491,6 +1573,8 @@ function setupDashboardEventListeners() {
   
   // Notification toggle button
   const notificationBtn = document.getElementById('notificationBtn');
+  const notificationSettings = document.getElementById('notification-settings');
+  
   if (notificationBtn) {
     const settings = StorageManager.getSettings();
     updateNotificationButtonText(notificationBtn, settings.notifications);
@@ -1504,6 +1588,12 @@ function setupDashboardEventListeners() {
           StorageManager.saveSetting('notifications', true);
           notificationManager.startPeriodicCheck();
           updateNotificationButtonText(notificationBtn, true);
+          
+          // Show notification settings
+          if (notificationSettings) {
+            notificationSettings.style.display = 'block';
+          }
+          
           alert('Notifications enabled! You\'ll receive alerts when food is about to expire.');
         } else {
           alert('Notification permission denied. You can enable it in your browser settings.');
@@ -1512,7 +1602,58 @@ function setupDashboardEventListeners() {
         StorageManager.saveSetting('notifications', false);
         notificationManager.stopPeriodicCheck();
         updateNotificationButtonText(notificationBtn, false);
+        
+        // Hide notification settings
+        if (notificationSettings) {
+          notificationSettings.style.display = 'none';
+        }
+        
         alert('Notifications disabled.');
+      }
+    });
+  }
+  
+  // Notification timing selector
+  const notificationTiming = document.getElementById('notificationTiming');
+  if (notificationTiming) {
+    notificationTiming.value = notificationManager.notificationTiming;
+    notificationTiming.addEventListener('change', (e) => {
+      notificationManager.saveNotificationTiming(parseInt(e.target.value));
+    });
+  }
+  
+  // Test notification button
+  const testNotificationBtn = document.getElementById('testNotificationBtn');
+  if (testNotificationBtn) {
+    testNotificationBtn.addEventListener('click', () => {
+      const success = notificationManager.sendTestNotification();
+      if (success) {
+        alert('Test notification sent! Check your browser notifications.');
+      }
+    });
+  }
+  
+  // Notification history button
+  const viewNotificationHistoryBtn = document.getElementById('viewNotificationHistoryBtn');
+  const notificationHistoryModal = document.getElementById('notificationHistoryModal');
+  
+  if (viewNotificationHistoryBtn && notificationHistoryModal) {
+    viewNotificationHistoryBtn.addEventListener('click', () => {
+      displayNotificationHistory();
+      notificationHistoryModal.style.display = 'block';
+    });
+    
+    // Close notification history modal
+    const closeBtn = notificationHistoryModal.querySelector('.close-button');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        notificationHistoryModal.style.display = 'none';
+      });
+    }
+    
+    notificationHistoryModal.addEventListener('click', (e) => {
+      if (e.target === notificationHistoryModal) {
+        notificationHistoryModal.style.display = 'none';
       }
     });
   }
@@ -1884,6 +2025,1377 @@ class APIService {
 
 // Initialize API service (for future use)
 const apiService = new APIService();
+
+// =========================
+// EXPANDED RECIPE DATABASE
+// =========================
+const recipeDatabase = {
+  "apple": [
+    {
+      id: "r001",
+      name: "Apple Pie",
+      difficulty: "Medium",
+      cookTime: "60 minutes",
+      rating: 4.8,
+      ingredients: ["apple", "flour", "butter", "sugar", "cinnamon"],
+      instructions: "1. Peel and slice apples. 2. Mix with sugar and cinnamon. 3. Prepare pie crust. 4. Assemble and bake at 375°F for 45-60 minutes.",
+      category: "Dessert",
+      servings: 8
+    },
+    {
+      id: "r002",
+      name: "Apple Crisp",
+      difficulty: "Easy",
+      cookTime: "45 minutes",
+      rating: 4.6,
+      ingredients: ["apple", "oats", "brown sugar", "butter", "cinnamon"],
+      instructions: "1. Slice apples and place in baking dish. 2. Mix topping ingredients. 3. Sprinkle over apples. 4. Bake at 350°F for 35-45 minutes.",
+      category: "Dessert",
+      servings: 6
+    }
+  ],
+  "banana": [
+    {
+      id: "r003",
+      name: "Banana Bread",
+      difficulty: "Easy",
+      cookTime: "70 minutes",
+      rating: 4.9,
+      ingredients: ["banana", "flour", "sugar", "eggs", "butter", "baking soda"],
+      instructions: "1. Mash bananas. 2. Mix wet ingredients. 3. Combine with dry ingredients. 4. Bake at 350°F for 60-70 minutes.",
+      category: "Baked Goods",
+      servings: 10
+    },
+    {
+      id: "r004",
+      name: "Banana Smoothie",
+      difficulty: "Easy",
+      cookTime: "5 minutes",
+      rating: 4.5,
+      ingredients: ["banana", "yogurt", "milk", "honey"],
+      instructions: "1. Combine all ingredients in blender. 2. Blend until smooth. 3. Serve immediately.",
+      category: "Beverage",
+      servings: 2
+    }
+  ],
+  "chicken": [
+    {
+      id: "r005",
+      name: "Chicken Stir Fry",
+      difficulty: "Easy",
+      cookTime: "20 minutes",
+      rating: 4.7,
+      ingredients: ["chicken", "broccoli", "carrot", "soy sauce", "garlic", "ginger"],
+      instructions: "1. Cut chicken into strips. 2. Heat oil in wok. 3. Cook chicken, then vegetables. 4. Add sauce and stir.",
+      category: "Main Dish",
+      servings: 4
+    },
+    {
+      id: "r006",
+      name: "Chicken Soup",
+      difficulty: "Medium",
+      cookTime: "90 minutes",
+      rating: 4.8,
+      ingredients: ["chicken", "carrot", "celery", "onion", "noodles", "broth"],
+      instructions: "1. Simmer chicken in water. 2. Remove chicken, add vegetables. 3. Shred chicken, return to pot. 4. Add noodles and cook.",
+      category: "Soup",
+      servings: 6
+    }
+  ],
+  "tomato": [
+    {
+      id: "r007",
+      name: "Tomato Pasta",
+      difficulty: "Easy",
+      cookTime: "25 minutes",
+      rating: 4.4,
+      ingredients: ["tomato", "pasta", "garlic", "basil", "olive oil"],
+      instructions: "1. Cook pasta. 2. Sauté garlic in oil. 3. Add diced tomatoes. 4. Toss with pasta and basil.",
+      category: "Main Dish",
+      servings: 4
+    },
+    {
+      id: "r008",
+      name: "Tomato Salad",
+      difficulty: "Easy",
+      cookTime: "10 minutes",
+      rating: 4.3,
+      ingredients: ["tomato", "mozzarella", "basil", "balsamic vinegar", "olive oil"],
+      instructions: "1. Slice tomatoes and mozzarella. 2. Arrange with basil. 3. Drizzle with oil and vinegar.",
+      category: "Salad",
+      servings: 4
+    }
+  ],
+  "potato": [
+    {
+      id: "r009",
+      name: "Mashed Potatoes",
+      difficulty: "Easy",
+      cookTime: "30 minutes",
+      rating: 4.6,
+      ingredients: ["potato", "butter", "milk", "salt"],
+      instructions: "1. Boil potatoes until tender. 2. Drain and mash. 3. Add butter and milk. 4. Season with salt.",
+      category: "Side Dish",
+      servings: 6
+    },
+    {
+      id: "r010",
+      name: "Roasted Potatoes",
+      difficulty: "Easy",
+      cookTime: "45 minutes",
+      rating: 4.5,
+      ingredients: ["potato", "olive oil", "rosemary", "salt", "pepper"],
+      instructions: "1. Cut potatoes into chunks. 2. Toss with oil and seasonings. 3. Roast at 425°F for 35-45 minutes.",
+      category: "Side Dish",
+      servings: 4
+    }
+  ]
+};
+
+// Recipe utility functions
+function findRecipesForIngredient(ingredient) {
+  const normalizedIngredient = ingredient.toLowerCase();
+  return recipeDatabase[normalizedIngredient] || [];
+}
+
+function findRecipesForMultipleIngredients(ingredients) {
+  const allRecipes = [];
+  const ingredientCounts = {};
+  
+  ingredients.forEach(ingredient => {
+    const recipes = findRecipesForIngredient(ingredient);
+    recipes.forEach(recipe => {
+      if (!ingredientCounts[recipe.id]) {
+        ingredientCounts[recipe.id] = { recipe, count: 0 };
+      }
+      ingredientCounts[recipe.id].count++;
+    });
+  });
+  
+  // Sort by number of matching ingredients (descending)
+  return Object.values(ingredientCounts)
+    .sort((a, b) => b.count - a.count)
+    .map(item => ({
+      ...item.recipe,
+      matchingIngredients: item.count
+    }));
+}
+
+function getDifficultyColor(difficulty) {
+  switch(difficulty) {
+    case 'Easy': return '#4CAF50';
+    case 'Medium': return '#FF9800';
+    case 'Hard': return '#F44336';
+    default: return '#757575';
+  }
+}
+
+function getStarRating(rating) {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  
+  return '★'.repeat(fullStars) + 
+         (hasHalfStar ? '☆' : '') + 
+         '☆'.repeat(emptyStars);
+}
+
+// Recipe display functions
+function showRecipes(foodName) {
+  const recipes = findRecipesForIngredient(foodName);
+  const allItems = StorageManager.getAllItems();
+  const availableIngredients = allItems.map(item => item.foodName.toLowerCase());
+  
+  // Also find recipes using multiple available ingredients
+  const multiIngredientRecipes = findRecipesForMultipleIngredients(availableIngredients);
+  
+  // Combine and deduplicate recipes
+  const allRecipes = [...recipes];
+  multiIngredientRecipes.forEach(recipe => {
+    if (!allRecipes.find(r => r.id === recipe.id)) {
+      allRecipes.push(recipe);
+    }
+  });
+  
+  if (allRecipes.length === 0) {
+    alert(`No recipes found for ${foodName}. Try adding more ingredients to your inventory for better recipe suggestions!`);
+    return;
+  }
+  
+  displayRecipeModal(allRecipes, foodName);
+}
+
+function displayRecipeModal(recipes, ingredientName = '') {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('recipeModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'recipeModal';
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+  }
+  
+  const modalContent = `
+    <div class="modal-content recipe-modal-content">
+      <span class="close-button">&times;</span>
+      <h3>🍳 ${ingredientName ? `Recipes with ${ingredientName}` : 'Suggested Recipes'}</h3>
+      <div class="recipe-grid">
+        ${recipes.map(recipe => createRecipeCard(recipe)).join('')}
+      </div>
+    </div>
+  `;
+  
+  modal.innerHTML = modalContent;
+  modal.style.display = 'block';
+  
+  // Close modal functionality
+  const closeBtn = modal.querySelector('.close-button');
+  closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+}
+
+function createRecipeCard(recipe) {
+  const difficultyColor = getDifficultyColor(recipe.difficulty);
+  const stars = getStarRating(recipe.rating);
+  const matchingText = recipe.matchingIngredients ? 
+    `<span class="matching-ingredients">Uses ${recipe.matchingIngredients} of your ingredients</span>` : '';
+  
+  return `
+    <div class="recipe-card">
+      <div class="recipe-header">
+        <h4>${recipe.name}</h4>
+        <div class="recipe-rating">${stars} (${recipe.rating})</div>
+      </div>
+      
+      <div class="recipe-meta">
+        <span class="recipe-difficulty" style="background-color: ${difficultyColor}">${recipe.difficulty}</span>
+        <span class="recipe-time">⏱️ ${recipe.cookTime}</span>
+        <span class="recipe-servings">👥 ${recipe.servings} servings</span>
+      </div>
+      
+      <div class="recipe-category">${recipe.category}</div>
+      ${matchingText}
+      
+      <div class="recipe-ingredients">
+        <strong>Ingredients:</strong>
+        <ul>
+          ${recipe.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+        </ul>
+      </div>
+      
+      <div class="recipe-instructions">
+        <strong>Instructions:</strong>
+        <p>${recipe.instructions}</p>
+      </div>
+    </div>
+  `;
+}
+
+// Enhanced recipe suggestions for dashboard
+function getRecipeSuggestions() {
+  const allItems = StorageManager.getAllItems();
+  if (allItems.length === 0) return [];
+  
+  const availableIngredients = allItems.map(item => item.foodName.toLowerCase());
+  const urgentItems = allItems.filter(item => 
+    item.calculatedData && item.calculatedData.urgency === 'urgent'
+  );
+  
+  // Prioritize recipes that use urgent items
+  let suggestions = [];
+  if (urgentItems.length > 0) {
+    urgentItems.forEach(item => {
+      const recipes = findRecipesForIngredient(item.foodName);
+      suggestions.push(...recipes);
+    });
+  }
+  
+  // Add multi-ingredient recipes
+  const multiRecipes = findRecipesForMultipleIngredients(availableIngredients);
+  suggestions.push(...multiRecipes);
+  
+  // Remove duplicates and limit to top 3
+  const uniqueRecipes = suggestions.filter((recipe, index, self) => 
+    index === self.findIndex(r => r.id === recipe.id)
+  );
+  
+  return uniqueRecipes.slice(0, 3);
+}
+
+// =========================
+// ENHANCED DATA IMPORT/EXPORT
+// =========================
+function exportToJSON() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    version: "2.0",
+    items: StorageManager.getAllItems(),
+    settings: StorageManager.getSettings(),
+    totalStats: calculateTotalStats()
+  };
+  
+  const jsonString = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `nutriscan-backup-${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  alert('Data exported to JSON successfully!');
+}
+
+function showImportModal() {
+  const modal = document.getElementById('importDataModal');
+  if (modal) {
+    modal.style.display = 'block';
+  }
+}
+
+function processImport() {
+  const fileInput = document.getElementById('fileImport');
+  const pasteInput = document.getElementById('pasteImport');
+  
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      try {
+        if (file.name.endsWith('.json')) {
+          importFromJSON(e.target.result);
+        } else if (file.name.endsWith('.csv')) {
+          importFromCSV(e.target.result);
+        }
+      } catch (error) {
+        alert('Error reading file: ' + error.message);
+      }
+    };
+    
+    reader.readAsText(file);
+  } else if (pasteInput.value.trim()) {
+    try {
+      importFromJSON(pasteInput.value.trim());
+    } catch (error) {
+      alert('Error parsing pasted data: ' + error.message);
+    }
+  } else {
+    alert('Please select a file or paste data to import.');
+  }
+}
+
+function importFromJSON(jsonString) {
+  try {
+    const data = JSON.parse(jsonString);
+    
+    if (!data.items || !Array.isArray(data.items)) {
+      throw new Error('Invalid JSON format: missing items array');
+    }
+    
+    const confirmMessage = `Import ${data.items.length} items? This will replace your current data.`;
+    if (!confirm(confirmMessage)) return;
+    
+    // Clear existing data
+    localStorage.removeItem(StorageManager.ITEMS_KEY);
+    
+    // Import new data
+    data.items.forEach(item => {
+      // Recalculate expiry data for imported items
+      item.calculatedData = calculateRealExpiry(
+        item.foodName, 
+        item.purchaseDate, 
+        item.storageCondition, 
+        item.quantity
+      );
+      StorageManager.saveItem(item);
+    });
+    
+    // Import settings if available
+    if (data.settings) {
+      Object.keys(data.settings).forEach(key => {
+        StorageManager.saveSetting(key, data.settings[key]);
+      });
+    }
+    
+    // Refresh dashboard
+    displayFoodItems();
+    loadDashboardData();
+    
+    // Close modal
+    document.getElementById('importDataModal').style.display = 'none';
+    
+    alert(`Successfully imported ${data.items.length} items!`);
+  } catch (error) {
+    alert('Import failed: ' + error.message);
+  }
+}
+
+function importFromCSV(csvString) {
+  try {
+    const lines = csvString.trim().split('\n');
+    if (lines.length < 2) {
+      throw new Error('CSV must have at least a header row and one data row');
+    }
+    
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+    const items = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+      const item = {
+        id: Date.now() + Math.random(),
+        foodName: values[headers.indexOf('Food Name')] || values[0],
+        quantity: values[headers.indexOf('Quantity')] || values[1],
+        purchaseDate: values[headers.indexOf('Purchase Date')] || values[2],
+        storageCondition: values[headers.indexOf('Storage')] || 'fridge'
+      };
+      
+      // Calculate expiry data
+      item.calculatedData = calculateRealExpiry(
+        item.foodName, 
+        item.purchaseDate, 
+        item.storageCondition, 
+        item.quantity
+      );
+      
+      items.push(item);
+    }
+    
+    const confirmMessage = `Import ${items.length} items from CSV? This will add to your existing data.`;
+    if (!confirm(confirmMessage)) return;
+    
+    items.forEach(item => StorageManager.saveItem(item));
+    
+    // Refresh dashboard
+    displayFoodItems();
+    loadDashboardData();
+    
+    // Close modal
+    document.getElementById('importDataModal').style.display = 'none';
+    
+    alert(`Successfully imported ${items.length} items from CSV!`);
+  } catch (error) {
+    alert('CSV Import failed: ' + error.message);
+  }
+}
+
+function generateBackup() {
+  const data = {
+    backup: true,
+    timestamp: new Date().toISOString(),
+    version: "2.0",
+    items: StorageManager.getAllItems(),
+    settings: StorageManager.getSettings(),
+    notificationHistory: notificationManager.getNotificationHistory()
+  };
+  
+  return JSON.stringify(data, null, 2);
+}
+
+function generateShareableReport() {
+  const items = StorageManager.getAllItems();
+  const stats = calculateTotalStats();
+  
+  const report = {
+    title: "NutriScan Impact Report",
+    generatedDate: new Date().toLocaleDateString(),
+    summary: {
+      totalItems: items.length,
+      moneySaved: stats.totalSaved,
+      co2Reduced: stats.totalCo2Saved,
+      waterSaved: stats.totalWaterSaved
+    },
+    urgentItems: items.filter(item => 
+      item.calculatedData && item.calculatedData.urgency === 'urgent'
+    ).length,
+    categories: getCategoryBreakdown(items)
+  };
+  
+  const reportText = `
+🌱 NutriScan Impact Report - ${report.generatedDate}
+
+📊 My Food Waste Reduction:
+💰 Money Saved: $${report.summary.moneySaved.toFixed(2)}
+🌍 CO2 Reduced: ${report.summary.co2Reduced.toFixed(1)} kg
+💧 Water Saved: ${report.summary.waterSaved.toFixed(0)} liters
+
+📦 Inventory Status:
+📋 Total Items: ${report.summary.totalItems}
+⚠️ Items Expiring Soon: ${report.urgentItems}
+
+Join me in reducing food waste with NutriScan! 
+#FoodWasteReduction #Sustainability #ZeroHunger
+  `;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'My NutriScan Impact Report',
+      text: reportText,
+      url: window.location.origin
+    });
+  } else {
+    navigator.clipboard.writeText(reportText).then(() => {
+      alert('Report copied to clipboard! You can now paste it to share your impact.');
+    });
+  }
+}
+
+function getCategoryBreakdown(items) {
+  const categories = {};
+  items.forEach(item => {
+    const foodData = foodExpiryDatabase[item.foodName];
+    const category = foodData ? foodData.category : 'other';
+    categories[category] = (categories[category] || 0) + 1;
+  });
+  return categories;
+}
+
+// =========================
+// SMART SHOPPING LIST GENERATION
+// =========================
+function generateSmartShoppingList() {
+  const items = StorageManager.getAllItems();
+  const expiredItems = items.filter(item => 
+    item.calculatedData && item.calculatedData.daysRemaining <= 0
+  );
+  const urgentItems = items.filter(item => 
+    item.calculatedData && item.calculatedData.urgency === 'urgent'
+  );
+  
+  const suggestions = [];
+  
+  // Add replacements for expired items
+  expiredItems.forEach(item => {
+    suggestions.push({
+      item: item.foodName,
+      quantity: item.quantity,
+      reason: 'Replace expired item',
+      priority: 'high',
+      category: getFoodCategory(item.foodName)
+    });
+  });
+  
+  // Add urgent items that might need replacement soon
+  urgentItems.forEach(item => {
+    if (!suggestions.find(s => s.item === item.foodName)) {
+      suggestions.push({
+        item: item.foodName,
+        quantity: item.quantity,
+        reason: 'Expiring soon - consider backup',
+        priority: 'medium',
+        category: getFoodCategory(item.foodName)
+      });
+    }
+  });
+  
+  // Add recipe-based suggestions
+  const recipeSuggestions = getRecipeSuggestions();
+  recipeSuggestions.forEach(recipe => {
+    recipe.ingredients.forEach(ingredient => {
+      const hasIngredient = items.find(item => 
+        item.foodName.toLowerCase().includes(ingredient.toLowerCase())
+      );
+      
+      if (!hasIngredient && !suggestions.find(s => s.item.toLowerCase() === ingredient.toLowerCase())) {
+        suggestions.push({
+          item: ingredient,
+          quantity: '1 unit',
+          reason: `For recipe: ${recipe.name}`,
+          priority: 'low',
+          category: getFoodCategory(ingredient)
+        });
+      }
+    });
+  });
+  
+  displayShoppingListModal(suggestions);
+}
+
+function getFoodCategory(foodName) {
+  const foodData = foodExpiryDatabase[foodName.toLowerCase()];
+  return foodData ? foodData.category : 'other';
+}
+
+function displayShoppingListModal(suggestions) {
+  let modal = document.getElementById('shoppingListModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'shoppingListModal';
+    modal.className = 'modal';
+    document.body.appendChild(modal);
+  }
+  
+  const categorizedSuggestions = categorizeSuggestions(suggestions);
+  
+  const modalContent = `
+    <div class="modal-content shopping-list-content">
+      <span class="close-button">&times;</span>
+      <h3>🛒 Smart Shopping List</h3>
+      <div class="shopping-list-stats">
+        <span class="list-stat">📋 ${suggestions.length} items</span>
+        <span class="list-stat">⚠️ ${suggestions.filter(s => s.priority === 'high').length} urgent</span>
+      </div>
+      
+      <div class="shopping-categories">
+        ${Object.keys(categorizedSuggestions).map(category => `
+          <div class="shopping-category">
+            <h4>${category.charAt(0).toUpperCase() + category.slice(1)}</h4>
+            <div class="shopping-items">
+              ${categorizedSuggestions[category].map(item => `
+                <div class="shopping-item ${item.priority}">
+                  <div class="item-info">
+                    <span class="item-name">${item.item}</span>
+                    <span class="item-quantity">${item.quantity}</span>
+                  </div>
+                  <div class="item-reason">${item.reason}</div>
+                  <div class="item-actions">
+                    <input type="checkbox" checked>
+                    <span class="priority-badge ${item.priority}">${item.priority}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div class="shopping-list-actions">
+        <button id="exportShoppingListBtn" class="btn btn-primary">📤 Export List</button>
+        <button id="shareShoppingListBtn" class="btn btn-secondary">📱 Share</button>
+        <button id="closeShoppingListBtn" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  `;
+  
+  modal.innerHTML = modalContent;
+  modal.style.display = 'block';
+  
+  // Event listeners
+  const closeBtn = modal.querySelector('.close-button');
+  const closeShoppingListBtn = modal.querySelector('#closeShoppingListBtn');
+  const exportBtn = modal.querySelector('#exportShoppingListBtn');
+  const shareBtn = modal.querySelector('#shareShoppingListBtn');
+  
+  [closeBtn, closeShoppingListBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+  });
+  
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => exportShoppingList(suggestions));
+  }
+  
+  if (shareBtn) {
+    shareBtn.addEventListener('click', () => shareShoppingList(suggestions));
+  }
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+}
+
+function categorizeSuggestions(suggestions) {
+  const categorized = {};
+  suggestions.forEach(suggestion => {
+    const category = suggestion.category || 'other';
+    if (!categorized[category]) {
+      categorized[category] = [];
+    }
+    categorized[category].push(suggestion);
+  });
+  
+  // Sort by priority within each category
+  Object.keys(categorized).forEach(category => {
+    categorized[category].sort((a, b) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+  });
+  
+  return categorized;
+}
+
+function exportShoppingList(suggestions) {
+  const checkedItems = Array.from(document.querySelectorAll('.shopping-item input:checked'))
+    .map(checkbox => {
+      const item = checkbox.closest('.shopping-item');
+      return {
+        name: item.querySelector('.item-name').textContent,
+        quantity: item.querySelector('.item-quantity').textContent,
+        priority: item.querySelector('.priority-badge').textContent
+      };
+    });
+  
+  const csvContent = [
+    ['Item', 'Quantity', 'Priority'],
+    ...checkedItems.map(item => [item.name, item.quantity, item.priority])
+  ]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `nutriscan-shopping-list-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  alert('Shopping list exported successfully!');
+}
+
+function shareShoppingList(suggestions) {
+  const checkedItems = Array.from(document.querySelectorAll('.shopping-item input:checked'))
+    .map(checkbox => {
+      const item = checkbox.closest('.shopping-item');
+      return {
+        name: item.querySelector('.item-name').textContent,
+        quantity: item.querySelector('.item-quantity').textContent
+      };
+    });
+  
+  const listText = `🛒 NutriScan Shopping List - ${new Date().toLocaleDateString()}
+
+${checkedItems.map(item => `• ${item.name} - ${item.quantity}`).join('\n')}
+
+Generated by NutriScan AI - Reduce food waste, save money! 🌱`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'My Shopping List',
+      text: listText
+    });
+  } else {
+    navigator.clipboard.writeText(listText).then(() => {
+      alert('Shopping list copied to clipboard!');
+    });
+  }
+}
+
+// =========================
+// ANALYTICS & INSIGHTS ENGINE
+// =========================
+function updateAnalytics() {
+  const items = StorageManager.getAllItems();
+  if (items.length === 0) return;
+  
+  updateCategoryBreakdown(items);
+  updateInsights(items);
+  animateCharts();
+}
+
+function updateCategoryBreakdown(items) {
+  const categories = getCategoryBreakdown(items);
+  const categoryChart = document.getElementById('categoryChart');
+  
+  if (!categoryChart) return;
+  
+  const total = Object.values(categories).reduce((sum, count) => sum + count, 0);
+  const sortedCategories = Object.entries(categories)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5); // Top 5 categories
+  
+  categoryChart.innerHTML = sortedCategories.map(([category, count]) => {
+    const percentage = Math.round((count / total) * 100);
+    return `
+      <div class="category-item">
+        <span class="category-name">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+        <div class="category-bar">
+          <div class="category-fill" style="width: ${percentage}%"></div>
+        </div>
+        <span class="category-percent">${percentage}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateInsights(items) {
+  const insights = generateSmartInsights(items);
+  const insightsList = document.querySelector('.insights-list');
+  
+  if (!insightsList) return;
+  
+  insightsList.innerHTML = insights.map(insight => `
+    <div class="insight-item">
+      <span class="insight-icon">${insight.icon}</span>
+      <p>${insight.message}</p>
+    </div>
+  `).join('');
+}
+
+function generateSmartInsights(items) {
+  const insights = [];
+  
+  // Category analysis
+  const categories = getCategoryBreakdown(items);
+  const topCategory = Object.entries(categories)
+    .sort(([,a], [,b]) => b - a)[0];
+  
+  if (topCategory) {
+    insights.push({
+      icon: '🔍',
+      message: `${topCategory[1]} items in ${topCategory[0]} category - your top tracked food type!`
+    });
+  }
+  
+  // Urgency analysis
+  const urgentItems = items.filter(item => 
+    item.calculatedData && item.calculatedData.urgency === 'urgent'
+  );
+  
+  if (urgentItems.length > 0) {
+    insights.push({
+      icon: '⚠️',
+      message: `${urgentItems.length} item${urgentItems.length === 1 ? '' : 's'} expiring soon - check your dashboard!`
+    });
+  } else {
+    insights.push({
+      icon: '✅',
+      message: 'Great job! No items expiring urgently right now.'
+    });
+  }
+  
+  // Value analysis
+  const totalValue = items.reduce((sum, item) => 
+    sum + (item.calculatedData?.estimatedValue || 0), 0
+  );
+  
+  if (totalValue > 0) {
+    insights.push({
+      icon: '💰',
+      message: `You're protecting $${totalValue.toFixed(2)} worth of food from waste!`
+    });
+  }
+  
+  // Usage pattern insight
+  const recentItems = items.filter(item => {
+    const purchaseDate = new Date(item.purchaseDate);
+    const daysSince = (Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSince <= 7;
+  });
+  
+  if (recentItems.length > 0) {
+    insights.push({
+      icon: '📅',
+      message: `You added ${recentItems.length} item${recentItems.length === 1 ? '' : 's'} this week - staying active!`
+    });
+  }
+  
+  return insights.slice(0, 3); // Show top 3 insights
+}
+
+function animateCharts() {
+  // Animate category bars
+  const categoryFills = document.querySelectorAll('.category-fill');
+  categoryFills.forEach((fill, index) => {
+    const width = fill.style.width;
+    fill.style.width = '0%';
+    setTimeout(() => {
+      fill.style.width = width;
+    }, index * 200);
+  });
+  
+  // Animate goal bars
+  const goalBars = document.querySelectorAll('.goal-bar');
+  goalBars.forEach((bar, index) => {
+    const width = bar.style.width;
+    bar.style.width = '0%';
+    setTimeout(() => {
+      bar.style.width = width;
+    }, index * 300);
+  });
+}
+
+// =========================
+// UX ENHANCEMENTS & TOAST NOTIFICATIONS
+// =========================
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  // Show toast
+  setTimeout(() => toast.classList.add('show'), 100);
+  
+  // Hide and remove toast
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => document.body.removeChild(toast), 300);
+  }, 3000);
+}
+
+function addLoadingState(button) {
+  if (button) {
+    button.classList.add('btn-loading');
+    button.disabled = true;
+  }
+}
+
+function removeLoadingState(button) {
+  if (button) {
+    button.classList.remove('btn-loading');
+    button.disabled = false;
+  }
+}
+
+function addFadeInAnimation(element) {
+  if (element) {
+    element.classList.add('fade-in');
+  }
+}
+
+function addSlideUpAnimation(element) {
+  if (element) {
+    element.classList.add('slide-up');
+  }
+}
+
+// Add ripple effect to buttons
+function addRippleEffect() {
+  const buttons = document.querySelectorAll('.btn');
+  buttons.forEach(button => {
+    if (!button.classList.contains('ripple')) {
+      button.classList.add('ripple');
+    }
+  });
+}
+
+// Initialize UX enhancements
+function initializeUXEnhancements() {
+  addRippleEffect();
+  
+  // Add loading animation for async operations
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', (e) => {
+      const submitButton = form.querySelector('button[type="submit"]');
+      addLoadingState(submitButton);
+      
+      // Remove loading state after operation (simulated)
+      setTimeout(() => {
+        removeLoadingState(submitButton);
+      }, 2000);
+    });
+  });
+  
+  // Smooth scroll for anchor links
+  const anchorLinks = document.querySelectorAll('a[href^="#"]');
+  anchorLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+  
+  // Initialize mobile optimizations
+  initializeMobileOptimizations();
+}
+
+// =========================
+// MOBILE OPTIMIZATIONS & PWA IMPROVEMENTS
+// =========================
+function initializeMobileOptimizations() {
+  // Create mobile navigation if on mobile
+  if (window.innerWidth <= 768) {
+    createMobileNavigation();
+  }
+  
+  // Add swipe gestures for item cards
+  addSwipeGestures();
+  
+  // Optimize touch targets
+  optimizeTouchTargets();
+  
+  // Add pull-to-refresh functionality
+  addPullToRefresh();
+}
+
+function createMobileNavigation() {
+  const mobileNav = document.createElement('div');
+  mobileNav.className = 'mobile-nav';
+  
+  mobileNav.innerHTML = `
+    <div class="nav-items">
+      <a href="/dashboard.html" class="nav-item ${window.location.pathname.includes('dashboard') ? 'active' : ''}">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="/input.html" class="nav-item ${window.location.pathname.includes('input') ? 'active' : ''}">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Add Food</span>
+      </a>
+      <a href="#" class="nav-item" onclick="generateSmartShoppingList()">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-label">Shopping</span>
+      </a>
+      <a href="/about.html" class="nav-item ${window.location.pathname.includes('about') ? 'active' : ''}">
+        <span class="nav-icon">ℹ️</span>
+        <span class="nav-label">About</span>
+      </a>
+    </div>
+  `;
+  
+  document.body.appendChild(mobileNav);
+}
+
+function addSwipeGestures() {
+  let startX, startY, startTime;
+  
+  document.addEventListener('touchstart', (e) => {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    startTime = Date.now();
+  });
+  
+  document.addEventListener('touchend', (e) => {
+    if (!startX || !startY) return;
+    
+    const touch = e.changedTouches[0];
+    const endX = touch.clientX;
+    const endY = touch.clientY;
+    const endTime = Date.now();
+    
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+    const deltaTime = endTime - startTime;
+    
+    // Check if it's a valid swipe (fast horizontal movement)
+    if (Math.abs(deltaX) > 100 && Math.abs(deltaY) < 50 && deltaTime < 300) {
+      const itemCard = e.target.closest('.item-card');
+      if (itemCard) {
+        if (deltaX > 0) {
+          // Swipe right - edit action
+          showToast('Swipe left for more options', 'info');
+        } else {
+          // Swipe left - delete action
+          const itemId = itemCard.dataset.itemId;
+          if (itemId && confirm('Delete this item?')) {
+            StorageManager.deleteItem(itemId);
+            displayFoodItems();
+            loadDashboardData();
+            showToast('Item deleted', 'success');
+          }
+        }
+      }
+    }
+    
+    startX = null;
+    startY = null;
+  });
+}
+
+function optimizeTouchTargets() {
+  // Ensure all interactive elements are at least 44px
+  const interactiveElements = document.querySelectorAll('button, input, select, a, [onclick]');
+  interactiveElements.forEach(element => {
+    const rect = element.getBoundingClientRect();
+    if (rect.height < 44 || rect.width < 44) {
+      element.style.minHeight = '44px';
+      element.style.minWidth = '44px';
+      element.style.display = 'inline-flex';
+      element.style.alignItems = 'center';
+      element.style.justifyContent = 'center';
+    }
+  });
+}
+
+function addPullToRefresh() {
+  let startY = 0;
+  let pullDistance = 0;
+  let isPulling = false;
+  
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0) {
+      startY = e.touches[0].clientY;
+      isPulling = true;
+    }
+  });
+  
+  document.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    
+    pullDistance = e.touches[0].clientY - startY;
+    
+    if (pullDistance > 0 && pullDistance < 100) {
+      e.preventDefault();
+      document.body.style.transform = `translateY(${pullDistance / 3}px)`;
+    }
+  });
+  
+  document.addEventListener('touchend', () => {
+    if (isPulling && pullDistance > 60) {
+      // Trigger refresh
+      showToast('Refreshing data...', 'info');
+      setTimeout(() => {
+        displayFoodItems();
+        loadDashboardData();
+        updateAnalytics();
+        showToast('Data refreshed!', 'success');
+      }, 1000);
+    }
+    
+    document.body.style.transform = '';
+    isPulling = false;
+    pullDistance = 0;
+  });
+}
+
+function displayNotificationHistory() {
+  const historyList = document.getElementById('notificationHistoryList');
+  if (!historyList) return;
+  
+  const history = notificationManager.getNotificationHistory();
+  
+  if (history.length === 0) {
+    historyList.innerHTML = '<p>No notifications sent yet.</p>';
+    return;
+  }
+  
+  historyList.innerHTML = history.map(item => `
+    <div class="notification-history-item">
+      <div>
+        <strong>${item.title}</strong>
+        <p>${item.body}</p>
+        <span class="notification-time">${new Date(item.timestamp).toLocaleString()}</span>
+      </div>
+      <span class="badge ${item.type === 'test' ? 'badge-info' : 'badge-success'}">${item.type}</span>
+    </div>
+  `).join('');
+}
+
+// =========================
+// BULK ACTIONS FUNCTIONALITY
+// =========================
+function setupBulkActionsListeners() {
+  // Individual item checkboxes
+  const itemCheckboxes = document.querySelectorAll('.item-select');
+  itemCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', handleItemSelection);
+  });
+  
+  // Set up bulk action event listeners only once
+  if (!window.bulkActionsInitialized) {
+    setupBulkActionButtons();
+    window.bulkActionsInitialized = true;
+  }
+  
+  updateBulkActionsVisibility();
+}
+
+function setupBulkActionButtons() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const bulkMarkUsedBtn = document.getElementById('bulkMarkUsedBtn');
+  const bulkExportBtn = document.getElementById('bulkExportBtn');
+  const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+  
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', handleSelectAll);
+  }
+  
+  if (bulkDeleteBtn) {
+    bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+  }
+  
+  if (bulkMarkUsedBtn) {
+    bulkMarkUsedBtn.addEventListener('click', handleBulkMarkUsed);
+  }
+  
+  if (bulkExportBtn) {
+    bulkExportBtn.addEventListener('click', handleBulkExport);
+  }
+  
+  if (clearSelectionBtn) {
+    clearSelectionBtn.addEventListener('click', clearAllSelections);
+  }
+}
+
+function handleItemSelection() {
+  updateBulkActionsVisibility();
+  updateSelectedCount();
+  updateSelectAllState();
+}
+
+function handleSelectAll() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const itemCheckboxes = document.querySelectorAll('.item-select');
+  
+  itemCheckboxes.forEach(checkbox => {
+    checkbox.checked = selectAllCheckbox.checked;
+    const itemCard = checkbox.closest('.item-card');
+    if (itemCard) {
+      if (checkbox.checked) {
+        itemCard.classList.add('selected');
+      } else {
+        itemCard.classList.remove('selected');
+      }
+    }
+  });
+  
+  updateBulkActionsVisibility();
+  updateSelectedCount();
+}
+
+function clearAllSelections() {
+  const itemCheckboxes = document.querySelectorAll('.item-select');
+  const selectAllCheckbox = document.getElementById('selectAll');
+  
+  itemCheckboxes.forEach(checkbox => {
+    checkbox.checked = false;
+    const itemCard = checkbox.closest('.item-card');
+    if (itemCard) {
+      itemCard.classList.remove('selected');
+    }
+  });
+  
+  if (selectAllCheckbox) {
+    selectAllCheckbox.checked = false;
+  }
+  
+  updateBulkActionsVisibility();
+  updateSelectedCount();
+}
+
+function getSelectedItems() {
+  const selectedCheckboxes = document.querySelectorAll('.item-select:checked');
+  return Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.itemId);
+}
+
+function updateBulkActionsVisibility() {
+  const bulkActions = document.getElementById('bulkActions');
+  const selectedItems = getSelectedItems();
+  
+  if (bulkActions) {
+    bulkActions.style.display = selectedItems.length > 0 ? 'flex' : 'none';
+  }
+}
+
+function updateSelectedCount() {
+  const selectedCount = document.getElementById('selectedCount');
+  const selectedItems = getSelectedItems();
+  
+  if (selectedCount) {
+    selectedCount.textContent = `${selectedItems.length} selected`;
+  }
+}
+
+function updateSelectAllState() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  const itemCheckboxes = document.querySelectorAll('.item-select');
+  const checkedCheckboxes = document.querySelectorAll('.item-select:checked');
+  
+  if (selectAllCheckbox && itemCheckboxes.length > 0) {
+    if (checkedCheckboxes.length === 0) {
+      selectAllCheckbox.indeterminate = false;
+      selectAllCheckbox.checked = false;
+    } else if (checkedCheckboxes.length === itemCheckboxes.length) {
+      selectAllCheckbox.indeterminate = false;
+      selectAllCheckbox.checked = true;
+    } else {
+      selectAllCheckbox.indeterminate = true;
+    }
+  }
+}
+
+function handleBulkDelete() {
+  const selectedItems = getSelectedItems();
+  
+  if (selectedItems.length === 0) {
+    alert('Please select items to delete.');
+    return;
+  }
+  
+  const confirmMessage = `Are you sure you want to delete ${selectedItems.length} selected item${selectedItems.length === 1 ? '' : 's'}?`;
+  
+  if (confirm(confirmMessage)) {
+    selectedItems.forEach(itemId => {
+      StorageManager.deleteItem(itemId);
+    });
+    
+    displayFoodItems();
+    loadDashboardData();
+    alert(`${selectedItems.length} item${selectedItems.length === 1 ? '' : 's'} deleted successfully.`);
+  }
+}
+
+function handleBulkMarkUsed() {
+  const selectedItems = getSelectedItems();
+  
+  if (selectedItems.length === 0) {
+    alert('Please select items to mark as used.');
+    return;
+  }
+  
+  const confirmMessage = `Mark ${selectedItems.length} selected item${selectedItems.length === 1 ? '' : 's'} as completely used?`;
+  
+  if (confirm(confirmMessage)) {
+    selectedItems.forEach(itemId => {
+      StorageManager.deleteItem(itemId); // Remove completely used items
+    });
+    
+    displayFoodItems();
+    loadDashboardData();
+    alert(`${selectedItems.length} item${selectedItems.length === 1 ? '' : 's'} marked as used.`);
+  }
+}
+
+function handleBulkExport() {
+  const selectedItems = getSelectedItems();
+  
+  if (selectedItems.length === 0) {
+    alert('Please select items to export.');
+    return;
+  }
+  
+  const allItems = StorageManager.getAllItems();
+  const selectedItemData = allItems.filter(item => selectedItems.includes(item.id));
+  
+  // Create CSV for selected items
+  const csvHeaders = ['Food Name', 'Quantity', 'Purchase Date', 'Storage', 'Days Remaining', 'Urgency', 'Estimated Value'];
+  const csvRows = selectedItemData.map(item => [
+    item.displayName || item.foodName,
+    item.quantity,
+    item.purchaseDate,
+    item.storageCondition,
+    item.calculatedData?.daysRemaining || 'N/A',
+    item.calculatedData?.urgency || 'N/A',
+    item.calculatedData?.estimatedValue?.toFixed(2) || 'N/A'
+  ]);
+  
+  const csvContent = [csvHeaders, ...csvRows]
+    .map(row => row.map(field => `"${field}"`).join(','))
+    .join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `nutriscan-selected-items-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  alert(`${selectedItems.length} selected item${selectedItems.length === 1 ? '' : 's'} exported to CSV.`);
+}
 
 // =========================
 // ERROR HANDLING & MONITORING

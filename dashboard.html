@@ -63,11 +63,158 @@
       </div>
       <div class="dashboard-actions">
         <button id="exportCsvBtn" class="btn btn-secondary" data-testid="button-export-csv">📊 Export CSV</button>
+        <button id="exportJsonBtn" class="btn btn-secondary" data-testid="button-export-json">💾 Export JSON</button>
+        <button id="importDataBtn" class="btn btn-secondary" data-testid="button-import-data">📥 Import Data</button>
         <button id="exportPdfBtn" class="btn btn-secondary" data-testid="button-export-pdf">📄 Export PDF Report</button>
+        <button id="generateShoppingListBtn" class="btn btn-secondary" data-testid="button-shopping-list">🛒 Shopping List</button>
         <button id="shareImpactBtn" class="btn btn-secondary" data-testid="button-share-impact">Share Your Impact</button>
         <button id="notificationBtn" class="btn btn-secondary" data-testid="button-toggle-notifications">🔔 Enable Notifications</button>
         <button id="clearStorageBtn" class="btn btn-danger" data-testid="button-clear-data">Clear All Data</button>
         <button id="upgradeBtn" class="btn btn-premium" data-testid="button-upgrade-premium">⭐ Upgrade to Premium</button>
+      </div>
+    </section>
+
+    <!-- Import Data Modal -->
+    <div id="importDataModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h3>📥 Import Food Data</h3>
+        <div class="import-options">
+          <div class="import-method">
+            <h4>Upload File</h4>
+            <input type="file" id="fileImport" accept=".json,.csv" />
+            <p class="import-help">Upload a JSON or CSV file with your food data</p>
+          </div>
+          <div class="import-method">
+            <h4>Paste Data</h4>
+            <textarea id="pasteImport" placeholder="Paste JSON data here..." rows="8"></textarea>
+            <p class="import-help">Paste exported JSON data directly</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="processImportBtn" class="btn btn-primary">Import Data</button>
+          <button id="cancelImportBtn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <!-- Notification Settings Section -->
+    <section id="notification-settings" class="notification-settings" style="display: none;">
+      <h2>🔔 Notification Settings</h2>
+      <div class="settings-grid">
+        <div class="setting-card">
+          <h4>Alert Timing</h4>
+          <select id="notificationTiming">
+            <option value="1">1 day before expiry</option>
+            <option value="2" selected>2 days before expiry</option>
+            <option value="7">1 week before expiry</option>
+          </select>
+        </div>
+        <div class="setting-card">
+          <h4>Notification Test</h4>
+          <button id="testNotificationBtn" class="btn btn-small btn-primary">Send Test Notification</button>
+        </div>
+        <div class="setting-card">
+          <h4>History</h4>
+          <button id="viewNotificationHistoryBtn" class="btn btn-small btn-secondary">View History</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notification History Modal -->
+    <div id="notificationHistoryModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h3>Notification History</h3>
+        <div id="notificationHistoryList" class="notification-history">
+          <p>No notifications sent yet.</p>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <!-- Analytics & Insights Section -->
+    <section id="analytics-section" class="analytics-section">
+      <h2>📊 Analytics & Insights</h2>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <h4>📈 Waste Reduction Trend</h4>
+          <div id="wasteTrendChart" class="chart-container">
+            <div class="simple-chart">
+              <div class="chart-bar" style="height: 60%"></div>
+              <div class="chart-bar" style="height: 75%"></div>
+              <div class="chart-bar" style="height: 90%"></div>
+              <div class="chart-bar" style="height: 85%"></div>
+            </div>
+            <p class="chart-description">📈 15% improvement this month</p>
+          </div>
+        </div>
+        
+        <div class="analytics-card">
+          <h4>🍎 Category Breakdown</h4>
+          <div id="categoryChart" class="category-stats">
+            <div class="category-item">
+              <span class="category-name">Fruits</span>
+              <div class="category-bar">
+                <div class="category-fill" style="width: 40%"></div>
+              </div>
+              <span class="category-percent">40%</span>
+            </div>
+            <div class="category-item">
+              <span class="category-name">Vegetables</span>
+              <div class="category-bar">
+                <div class="category-fill" style="width: 30%"></div>
+              </div>
+              <span class="category-percent">30%</span>
+            </div>
+            <div class="category-item">
+              <span class="category-name">Dairy</span>
+              <div class="category-bar">
+                <div class="category-fill" style="width: 20%"></div>
+              </div>
+              <span class="category-percent">20%</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="analytics-card">
+          <h4>🎯 Monthly Goals</h4>
+          <div class="goals-container">
+            <div class="goal-item">
+              <span>Waste Reduction</span>
+              <div class="goal-progress">
+                <div class="goal-bar" style="width: 75%"></div>
+              </div>
+              <span>75%</span>
+            </div>
+            <div class="goal-item">
+              <span>Money Saved</span>
+              <div class="goal-progress">
+                <div class="goal-bar" style="width: 60%"></div>
+              </div>
+              <span>60%</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="analytics-card">
+          <h4>💡 Smart Insights</h4>
+          <div class="insights-list">
+            <div class="insight-item">
+              <span class="insight-icon">🔍</span>
+              <p>You save most money on vegetables - keep it up!</p>
+            </div>
+            <div class="insight-item">
+              <span class="insight-icon">⚠️</span>
+              <p>Dairy items expire fastest in your inventory</p>
+            </div>
+            <div class="insight-item">
+              <span class="insight-icon">📅</span>
+              <p>Best shopping day: Tuesday (prices 12% lower)</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -77,6 +224,21 @@
         <div class="search-controls">
           <input type="text" id="searchInput" placeholder="Search your food items..." class="search-input">
           <button id="clearSearch" class="btn btn-small btn-secondary">Clear</button>
+        </div>
+        <div class="bulk-actions" id="bulkActions" style="display: none;">
+          <div class="bulk-selection">
+            <label class="bulk-select-all">
+              <input type="checkbox" id="selectAll">
+              <span>Select All</span>
+            </label>
+            <span id="selectedCount" class="selected-count">0 selected</span>
+          </div>
+          <div class="bulk-buttons">
+            <button id="bulkDeleteBtn" class="btn btn-small btn-danger">Delete Selected</button>
+            <button id="bulkMarkUsedBtn" class="btn btn-small btn-warning">Mark as Used</button>
+            <button id="bulkExportBtn" class="btn btn-small btn-secondary">Export Selected</button>
+            <button id="clearSelectionBtn" class="btn btn-small btn-secondary">Clear Selection</button>
+          </div>
         </div>
         <div class="filter-controls">
           <select id="sortFilter" data-testid="sort-filter">
