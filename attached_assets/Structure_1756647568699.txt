@@ -1,0 +1,14 @@
+NutriScan/
+│
+├─ index.html         # Home / Landing page
+├─ input.html         # Scan / Upload food items
+├─ results.html       # Display detected items & expiry info
+├─ about.html         # About the app
+│
+├─ style.css          # Complete CSS
+├─ script.js          # Complete JS with validation, storage, image preview, results population, and clear storage
+│
+└─ assets/            # Images, icons, illustrations
+    ├─ scan-illustration.svg
+    ├─ healthy-food.png
+    └─ ...
