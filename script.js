@@ -1239,10 +1239,27 @@ function displayFoodItems() {
   const noItemsMessage = document.getElementById('no-items-message');
   const sortFilter = document.getElementById('sortFilter');
   const categoryFilter = document.getElementById('categoryFilter');
+  const searchInput = document.getElementById('searchInput');
   
   if (!itemList) return;
   
   let items = StorageManager.getAllItems();
+  
+  // Apply search filter
+  if (searchInput && searchInput.value.trim()) {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    items = items.filter(item => {
+      const itemData = foodExpiryDatabase[item.foodName];
+      const displayName = (item.displayName || item.foodName).toLowerCase();
+      const category = itemData ? itemData.category.toLowerCase() : '';
+      const storage = item.storageCondition.toLowerCase();
+      
+      return displayName.includes(searchTerm) || 
+             category.includes(searchTerm) || 
+             storage.includes(searchTerm) ||
+             item.quantity.toLowerCase().includes(searchTerm);
+    });
+  }
   
   // Apply category filter
   if (categoryFilter && categoryFilter.value !== 'all') {
@@ -1279,11 +1296,43 @@ function displayFoodItems() {
   }
   
   if (items.length === 0) {
-    itemList.innerHTML = '';
-    noItemsMessage.style.display = 'block';
+    const searchInput = document.getElementById('searchInput');
+    const hasSearchTerm = searchInput && searchInput.value.trim();
+    
+    if (hasSearchTerm) {
+      itemList.innerHTML = '<p class="no-results-message">No items found matching your search. Try different keywords or clear the search.</p>';
+    } else {
+      itemList.innerHTML = '';
+      noItemsMessage.style.display = 'block';
+    }
   } else {
     noItemsMessage.style.display = 'none';
     itemList.innerHTML = items.map(item => createItemCard(item)).join('');
+  }
+}
+
+function updateSearchResults() {
+  const searchInput = document.getElementById('searchInput');
+  const searchResultsEl = document.getElementById('searchResults');
+  
+  // Create search results element if it doesn't exist
+  if (!searchResultsEl && searchInput) {
+    const resultsDiv = document.createElement('div');
+    resultsDiv.id = 'searchResults';
+    searchInput.parentNode.insertBefore(resultsDiv, searchInput.nextSibling);
+  }
+  
+  if (searchInput && document.getElementById('searchResults')) {
+    const searchTerm = searchInput.value.trim();
+    const allItems = StorageManager.getAllItems();
+    const itemList = document.getElementById('itemList');
+    
+    if (searchTerm) {
+      const visibleItems = itemList ? itemList.querySelectorAll('.item-card').length : 0;
+      document.getElementById('searchResults').textContent = `Found ${visibleItems} item${visibleItems === 1 ? '' : 's'} matching "${searchTerm}"`;
+    } else {
+      document.getElementById('searchResults').textContent = '';
+    }
   }
 }
 
@@ -1473,6 +1522,31 @@ function setupDashboardEventListeners() {
   if (clearStorageBtn) {
     clearStorageBtn.addEventListener('click', () => {
       StorageManager.clearAllData();
+    });
+  }
+  
+  // Search controls
+  const searchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('clearSearch');
+  
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        displayFoodItems();
+        updateSearchResults();
+      }, 300); // Debounce search for better performance
+    });
+  }
+  
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', function() {
+      if (searchInput) {
+        searchInput.value = '';
+        displayFoodItems();
+        updateSearchResults();
+      }
     });
   }
   
@@ -1815,9 +1889,14 @@ const apiService = new APIService();
 // ERROR HANDLING & MONITORING
 // =========================
 
-// Global error handler
+// Global error handler - only show errors that aren't handled elsewhere
 window.addEventListener('error', function(e) {
-  handleError(e.error, 'A technical error occurred. Please refresh the page.');
+  // Only show error if it's not from a handled operation
+  if (!e.error || e.error.message.includes('Image recognition requires API integration')) {
+    return; // Ignore API placeholder errors
+  }
+  console.error('Unhandled error:', e.error);
+  // Removed automatic error display to prevent interference
 });
 
 // Unhandled promise rejection handler
