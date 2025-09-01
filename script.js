@@ -3416,6 +3416,108 @@ window.addEventListener('unhandledrejection', function(e) {
   handleError(e.reason, 'A network error occurred. Please check your connection.');
 });
 
+// =========================
+// AUTHENTICATION SYSTEM
+// =========================
+
+// Initialize authentication when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+  initializeAuth();
+  updateNavigation();
+});
+
+function initializeAuth() {
+  // Check if we're on the authentication page
+  if (document.getElementById('loginBtn')) {
+    setupAuthEventListeners();
+  }
+}
+
+function setupAuthEventListeners() {
+  const loginBtn = document.getElementById('loginBtn');
+  const signupBtn = document.getElementById('signupBtn');
+  const guestBtn = document.getElementById('guestBtn');
+  const authMessage = document.getElementById('authMessage');
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', function() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      if (username && password) {
+        showAuthMessage('Full login system coming soon. Continue as Guest to explore the app.');
+      } else {
+        showAuthMessage('Please enter both username and password.');
+      }
+    });
+  }
+
+  if (signupBtn) {
+    signupBtn.addEventListener('click', function() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      if (username && password) {
+        showAuthMessage('Full login system coming soon. Continue as Guest to explore the app.');
+      } else {
+        showAuthMessage('Please enter both username and password.');
+      }
+    });
+  }
+
+  if (guestBtn) {
+    guestBtn.addEventListener('click', function() {
+      localStorage.setItem('guestMode', 'true');
+      window.location.href = 'home.html';
+    });
+  }
+}
+
+function showAuthMessage(message) {
+  const authMessage = document.getElementById('authMessage');
+  if (authMessage) {
+    authMessage.textContent = message;
+    authMessage.classList.add('show');
+  }
+}
+
+function updateNavigation() {
+  // Update navigation based on guest mode status
+  const guestMode = localStorage.getItem('guestMode') === 'true';
+  const navLinks = document.querySelectorAll('nav a');
+  
+  navLinks.forEach(link => {
+    // Update index.html links to point to home.html
+    if (link.getAttribute('href') === 'index.html') {
+      if (guestMode) {
+        link.textContent = 'Guest (Sign out)';
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          localStorage.removeItem('guestMode');
+          window.location.href = 'index.html';
+        });
+      } else {
+        link.textContent = 'Login';
+        link.href = 'index.html';
+      }
+    }
+    
+    // Update home links
+    if (link.getAttribute('href') === 'home.html' || (link.getAttribute('href') === 'index.html' && link.classList.contains('active'))) {
+      if (!guestMode && window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
+        // If not in guest mode and not on login page, update home links
+        link.href = 'home.html';
+        if (link.textContent === 'Home') {
+          link.textContent = 'Home';
+        }
+      }
+    }
+  });
+}
+
+// Run navigation update on every page load
+updateNavigation();
+
 console.log('🍎 NutriScan AI Enhanced Script Loaded Successfully');
 console.log('📊 Features: Purchase date tracking, fuzzy matching, notifications, PWA support');
 console.log('🔧 Version: Production-ready with realistic functionality');

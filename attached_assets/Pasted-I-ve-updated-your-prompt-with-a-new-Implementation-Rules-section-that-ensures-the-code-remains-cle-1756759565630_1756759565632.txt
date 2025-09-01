@@ -1,0 +1,61 @@
+I've updated your prompt with a new "Implementation Rules" section that ensures the code remains clean, scalable, and focused on user experience. You can now use this complete prompt.
+Project: NutriScan AI (vanilla HTML/CSS/JS, PWA)
+Goal: Add a demo authentication screen with Login, Sign-Up, and Guest Mode without adding real authentication or a backend. Keep the current structure and do not break existing pages.
+Requirements (Do exactly this)
+Rename the existing index.html to home.html.
+Create a NEW page named index.html with a centered card:
+App logo/title: “🍎 NutriScan AI”
+Subtitle: “Demo Authentication”
+Username input (id="username", name="username", required)
+Password input (id="password", name="password", type password, required)
+Buttons:
+Primary Login (id="loginBtn", type button)
+Secondary Sign Up (id="signupBtn", type button)
+Tertiary Continue as Guest (id="guestBtn", type button)
+Small note under the form:
+id="authNote" with text: “Full login & sign-up system coming soon. For the demo, you can continue as Guest.”
+Inline message area (id="authMessage") for feedback.
+Behavior (JavaScript in script.js, no new frameworks):
+On Login click:
+Read the username/password values (accept the input, but do not authenticate).
+Show message in #authMessage: “Full login system coming soon. Continue as Guest to explore the app.”
+Keep the Continue as Guest button visible/enabled.
+On Sign Up click:
+Same behavior/message as Login (no real sign-up).
+On Continue as Guest click:
+localStorage.setItem('guestMode', 'true')
+Redirect to home.html.
+Navigation updates (minimal):
+In existing headers/navbars, update any link that pointed to index.html to now point to home.html.
+Add a new link to the header/navbar pointing to index.html with the text "Login."
+When guestMode is active (i.e., localStorage.getItem('guestMode') === 'true'), replace the nav link text with “Guest (Sign out)”:
+Clicking Guest (Sign out) should:
+localStorage.removeItem('guestMode')
+Redirect to index.html.
+Constraints:
+No backend, no external auth providers, no API keys.
+Do not change existing page routes or break PWA/service worker behavior.
+Keep everything in vanilla HTML/CSS/JS.
+Reuse style.css. Add a small login card style section (mobile friendly, 44px touch targets).
+Keep existing IDs used elsewhere intact. Only add new IDs listed here.
+IDs to use (must match):
+Page: index.html
+Inputs: #username, #password
+Buttons: #loginBtn, #signupBtn, #guestBtn
+Messages/notes: #authMessage, #authNote
+Acceptance criteria (test this before finishing):
+Visiting the main URL shows the form with Login, Sign Up, Continue as Guest.
+Typing in username/password and clicking Login or Sign Up shows the coming soon message and does not navigate.
+Continue as Guest sets guestMode in localStorage and takes me to home.html.
+When in guest mode, the nav shows “Guest (Sign out)”, which clears guestMode and returns to index.html.
+The rest of the app (input, dashboard, PWA) remains fully functional and unchanged.
+Notes
+This is a demo screen only. Do not add real authentication or external services.
+Keep the UI clean and consistent with the existing branding.
+Implementation Rules
+ * Use Existing Files Only: Make all changes within index.html, home.html, style.css, and script.js. Do not create new CSS or JS files.
+ * Maintain Consistency: The new UI elements must match the existing app's design language, including colors, fonts, and spacing.
+ * Modular Code: Where possible, separate new JavaScript logic into clearly commented sections to avoid mixing it with existing code. Use event listeners to keep the HTML clean.
+ * Focus on Polish: Ensure all new elements are responsive and accessible, especially for mobile users.
+ * Strictly Follow Constraints: Do not add any new dependencies, API calls, or backend logic. This task is purely for front-end enhancement.
+ * Test Each Change: After each major step (renaming, creating the new page, adding JavaScript behavior), perform a quick test to ensure the previous functionality is not broken.
