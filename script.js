@@ -3509,7 +3509,7 @@ function setupAuthEventListeners() {
           if (guestBtn) {
             guestBtn.click();
           }
-        }, 1500);
+        }, 2500);
       } else {
         showAuthMessage('Please enter both username and password.');
       }
@@ -3527,7 +3527,7 @@ function setupAuthEventListeners() {
           if (guestBtn) {
             guestBtn.click();
           }
-        }, 1500);
+        }, 2500);
       } else {
         showAuthMessage('Please enter both username and password.');
       }
