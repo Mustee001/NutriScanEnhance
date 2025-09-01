@@ -3504,12 +3504,9 @@ function setupAuthEventListeners() {
       const password = document.getElementById('password').value;
       
       if (username && password) {
-        showAuthMessage('Full login access coming soon. Redirecting to guest mode.');
-        setTimeout(function() {
-          if (guestBtn) {
-            guestBtn.click();
-          }
-        }, 2500);
+        showAuthMessage('Full login access coming soon. For the demo, you can continue as Guest.');
+        hideAuthButtons();
+        showContinueButton();
       } else {
         showAuthMessage('Please enter both username and password.');
       }
@@ -3522,12 +3519,9 @@ function setupAuthEventListeners() {
       const password = document.getElementById('password').value;
       
       if (username && password) {
-        showAuthMessage('Full login access coming soon. Redirecting to guest mode.');
-        setTimeout(function() {
-          if (guestBtn) {
-            guestBtn.click();
-          }
-        }, 2500);
+        showAuthMessage('Full login access coming soon. For the demo, you can continue as Guest.');
+        hideAuthButtons();
+        showContinueButton();
       } else {
         showAuthMessage('Please enter both username and password.');
       }
@@ -3540,6 +3534,16 @@ function setupAuthEventListeners() {
       window.location.href = 'home.html';
     });
   }
+
+  // Continue button handler
+  const continueBtn = document.getElementById('continueBtn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', function() {
+      if (guestBtn) {
+        guestBtn.click();
+      }
+    });
+  }
 }
 
 function showAuthMessage(message) {
@@ -3547,6 +3551,21 @@ function showAuthMessage(message) {
   if (authMessage) {
     authMessage.textContent = message;
     authMessage.classList.add('show');
+  }
+}
+
+function hideAuthButtons() {
+  const loginBtn = document.getElementById('loginBtn');
+  const signupBtn = document.getElementById('signupBtn');
+  
+  if (loginBtn) loginBtn.style.display = 'none';
+  if (signupBtn) signupBtn.style.display = 'none';
+}
+
+function showContinueButton() {
+  const continueBtn = document.getElementById('continueBtn');
+  if (continueBtn) {
+    continueBtn.style.display = 'block';
   }
 }
 
