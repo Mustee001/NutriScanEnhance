@@ -309,18 +309,21 @@ main {
 
 input[type="text"], 
 input[type="date"], 
+input[type="password"],
 select {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 1rem;
+  min-height: 44px;
   transition: var(--transition);
   background-color: var(--white-color);
 }
 
 input[type="text"]:focus, 
 input[type="date"]:focus, 
+input[type="password"]:focus,
 select:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -1415,8 +1418,8 @@ a:focus {
 }
 
 .item-checkbox input[type="checkbox"] {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 0.9rem;
+  height: 0.9rem;
   cursor: pointer;
 }
 

@@ -870,7 +870,7 @@ const notificationManager = new NotificationManager();
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize service worker if available
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(registration => console.log('SW registered:', registration))
       .catch(error => console.log('SW registration failed:', error));
   }
@@ -1888,24 +1888,57 @@ function getCategoryEmoji(category) {
   return emojis[category] || '🍽️';
 }
 
-// Handle errors gracefully
+// Handle errors gracefully with toast notifications
 function handleError(error, message = 'An error occurred') {
   console.error('Error:', error);
+  showToast(message, 'error');
+}
+
+// Show toast notification system
+function showToast(message, type = 'info', duration = 5000) {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
   
-  // Show user-friendly error message
-  const errorDiv = document.createElement('div');
-  errorDiv.className = 'error-message';
-  errorDiv.textContent = message;
-  errorDiv.style.position = 'fixed';
-  errorDiv.style.top = '20px';
-  errorDiv.style.right = '20px';
-  errorDiv.style.zIndex = '9999';
+  // Style the toast
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 250px;
+    padding: 1rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  `;
   
-  document.body.appendChild(errorDiv);
+  // Set background color based on type
+  const colors = {
+    error: '#f44336',
+    success: '#4CAF50',
+    warning: '#ff9800',
+    info: '#2196F3'
+  };
+  toast.style.backgroundColor = colors[type] || colors.info;
   
+  document.body.appendChild(toast);
+  
+  // Animate in
+  setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+  
+  // Auto-remove
   setTimeout(() => {
-    document.body.removeChild(errorDiv);
-  }, 5000);
+    toast.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, duration);
 }
 
 // =========================
@@ -2376,7 +2409,7 @@ function processImport() {
           importFromCSV(e.target.result);
         }
       } catch (error) {
-        alert('Error reading file: ' + error.message);
+        showToast('Error reading file: ' + error.message, 'error');
       }
     };
     
@@ -2385,10 +2418,10 @@ function processImport() {
     try {
       importFromJSON(pasteInput.value.trim());
     } catch (error) {
-      alert('Error parsing pasted data: ' + error.message);
+      showToast('Error parsing pasted data: ' + error.message, 'error');
     }
   } else {
-    alert('Please select a file or paste data to import.');
+    showToast('Please select a file or paste data to import.', 'warning');
   }
 }
 
@@ -2432,9 +2465,9 @@ function importFromJSON(jsonString) {
     // Close modal
     document.getElementById('importDataModal').style.display = 'none';
     
-    alert(`Successfully imported ${data.items.length} items!`);
+    showToast(`Successfully imported ${data.items.length} items!`, 'success');
   } catch (error) {
-    alert('Import failed: ' + error.message);
+    showToast('Import failed: ' + error.message, 'error');
   }
 }
 
@@ -2481,9 +2514,9 @@ function importFromCSV(csvString) {
     // Close modal
     document.getElementById('importDataModal').style.display = 'none';
     
-    alert(`Successfully imported ${items.length} items from CSV!`);
+    showToast(`Successfully imported ${items.length} items from CSV!`, 'success');
   } catch (error) {
-    alert('CSV Import failed: ' + error.message);
+    showToast('CSV Import failed: ' + error.message, 'error');
   }
 }
 
@@ -3231,6 +3264,19 @@ function setupBulkActionButtons() {
 }
 
 function handleItemSelection() {
+  const checkbox = this;
+  const itemCard = checkbox.closest('.item-card');
+  
+  // Update visual state
+  if (itemCard) {
+    if (checkbox.checked) {
+      itemCard.classList.add('selected');
+    } else {
+      itemCard.classList.remove('selected');
+    }
+  }
+  
+  // Update all states
   updateBulkActionsVisibility();
   updateSelectedCount();
   updateSelectAllState();
@@ -3239,18 +3285,22 @@ function handleItemSelection() {
 function handleSelectAll() {
   const selectAllCheckbox = document.getElementById('selectAll');
   const itemCheckboxes = document.querySelectorAll('.item-select');
+  const shouldCheck = selectAllCheckbox.checked;
   
   itemCheckboxes.forEach(checkbox => {
-    checkbox.checked = selectAllCheckbox.checked;
+    checkbox.checked = shouldCheck;
     const itemCard = checkbox.closest('.item-card');
     if (itemCard) {
-      if (checkbox.checked) {
+      if (shouldCheck) {
         itemCard.classList.add('selected');
       } else {
         itemCard.classList.remove('selected');
       }
     }
   });
+  
+  // Reset indeterminate state when manually toggled
+  selectAllCheckbox.indeterminate = false;
   
   updateBulkActionsVisibility();
   updateSelectedCount();
@@ -3304,15 +3354,24 @@ function updateSelectAllState() {
   const itemCheckboxes = document.querySelectorAll('.item-select');
   const checkedCheckboxes = document.querySelectorAll('.item-select:checked');
   
-  if (selectAllCheckbox && itemCheckboxes.length > 0) {
-    if (checkedCheckboxes.length === 0) {
+  if (selectAllCheckbox) {
+    if (itemCheckboxes.length === 0) {
+      // No items, uncheck and disable
       selectAllCheckbox.indeterminate = false;
       selectAllCheckbox.checked = false;
-    } else if (checkedCheckboxes.length === itemCheckboxes.length) {
-      selectAllCheckbox.indeterminate = false;
-      selectAllCheckbox.checked = true;
+      selectAllCheckbox.disabled = true;
     } else {
-      selectAllCheckbox.indeterminate = true;
+      selectAllCheckbox.disabled = false;
+      if (checkedCheckboxes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+      } else if (checkedCheckboxes.length === itemCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+      } else {
+        selectAllCheckbox.indeterminate = true;
+        selectAllCheckbox.checked = false;
+      }
     }
   }
 }
@@ -3445,7 +3504,12 @@ function setupAuthEventListeners() {
       const password = document.getElementById('password').value;
       
       if (username && password) {
-        showAuthMessage('Full login system coming soon. Continue as Guest to explore the app.');
+        showAuthMessage('Full login access coming soon. Redirecting to guest mode.');
+        setTimeout(function() {
+          if (guestBtn) {
+            guestBtn.click();
+          }
+        }, 1500);
       } else {
         showAuthMessage('Please enter both username and password.');
       }
@@ -3458,7 +3522,12 @@ function setupAuthEventListeners() {
       const password = document.getElementById('password').value;
       
       if (username && password) {
-        showAuthMessage('Full login system coming soon. Continue as Guest to explore the app.');
+        showAuthMessage('Full login access coming soon. Redirecting to guest mode.');
+        setTimeout(function() {
+          if (guestBtn) {
+            guestBtn.click();
+          }
+        }, 1500);
       } else {
         showAuthMessage('Please enter both username and password.');
       }

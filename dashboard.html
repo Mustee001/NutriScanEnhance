@@ -290,6 +290,54 @@
         </form>
       </div>
     </div>
+
+    <!-- Import Data Modal -->
+    <div id="importDataModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" data-testid="button-close-import-modal">&times;</span>
+        <h3>Import Data</h3>
+        <div class="import-options">
+          <div class="form-group">
+            <label for="csvFileInput">Import from CSV file:</label>
+            <input type="file" id="csvFileInput" accept=".csv" />
+          </div>
+          <div class="form-group">
+            <label for="jsonDataInput">Or paste JSON data:</label>
+            <textarea id="jsonDataInput" placeholder="Paste your JSON data here..." rows="6"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-primary" id="importCsvBtn">Import CSV</button>
+            <button type="button" class="btn btn-primary" id="importJsonBtn">Import JSON</button>
+            <button type="button" class="btn btn-secondary" id="cancelImport">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Settings Section -->
+    <div id="notification-settings" class="notification-settings" style="display: none;">
+      <div class="settings-content">
+        <h3>Notification Settings</h3>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="enableNotifications" checked> Enable browser notifications
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="notificationTiming">Notify me when items expire in:</label>
+          <select id="notificationTiming">
+            <option value="1">1 day</option>
+            <option value="2" selected>2 days</option>
+            <option value="3">3 days</option>
+            <option value="7">1 week</option>
+          </select>
+        </div>
+        <div class="settings-actions">
+          <button type="button" class="btn btn-primary" id="saveNotificationSettings">Save Settings</button>
+          <button type="button" class="btn btn-secondary" id="closeNotificationSettings">Close</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer>
