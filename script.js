@@ -3519,7 +3519,7 @@ function setupAuthEventListeners() {
       const password = document.getElementById('password').value;
       
       if (username && password) {
-        showAuthMessage('Full login access coming soon. For the demo, you can continue as Guest.');
+        showAuthMessage('Full registration and login services are coming soon. For the demo, you can continue as a guest.');
         hideAuthButtons();
         showContinueButton();
       } else {
