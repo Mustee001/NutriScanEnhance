@@ -3514,17 +3514,11 @@ function setupAuthEventListeners() {
   }
 
   if (signupBtn) {
-    signupBtn.addEventListener('click', function() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      
-      if (username && password) {
-        showAuthMessage('Full registration and login services are coming soon. For the demo, you can continue as a guest.');
-        hideAuthButtons();
-        showContinueButton();
-      } else {
-        showAuthMessage('Please enter both username and password.');
-      }
+    signupBtn.addEventListener('click', function(event) {
+      event.preventDefault();
+      showAuthMessage('Full registration and login services are coming soon. For the demo, you can continue as a guest.');
+      hideAuthButtons();
+      showContinueButton();
     });
   }
 
