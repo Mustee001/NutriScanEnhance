@@ -1760,6 +1760,14 @@ function setupDashboardEventListeners() {
       });
     }
   }
+  
+  // Refresh button
+  const refreshBtn = document.getElementById('refreshBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
 }
 
 function updateNotificationButtonText(button, enabled) {
